@@ -2,7 +2,8 @@ import sqlite3
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
+from typing import Literal
 
 app = FastAPI()
 
@@ -30,7 +31,20 @@ create_table()
 class Application(BaseModel):
     company: str
     position: str
-    status: str
+    status: Literal["已投递", "面试中", "已录用", "未通过"]
+
+    @field_validator("company", "position")
+    @classmethod
+    def check_text(cls, value: str) -> str:
+        value = value.strip()
+
+        if not value:
+            raise ValueError("不能为空或仅包含空格")
+
+        if len(value) > 100:
+            raise ValueError("不能超过 100 个字符")
+
+        return value
 
 
 @app.get("/")
