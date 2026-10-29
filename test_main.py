@@ -122,3 +122,33 @@ def test_filter_applications_by_status(client):
     assert len(response.json()) == 1
     assert response.json()[0]["company"] == "乙公司"
 
+
+def test_update_application_status(client):
+    # 创建一条“已投递”的记录
+    response = client.post(
+        "/applications",
+        json={
+            "company": "测试公司",
+            "position": "开发实习生",
+            "status": "已投递",
+        },
+    )
+    application_id = response.json()["id"]
+
+    # 把状态改成“面试中”
+    response = client.put(
+        f"/applications/{application_id}",
+        json={
+            "company": "测试公司",
+            "position": "开发实习生",
+            "status": "面试中",
+        },
+    )
+
+    assert response.status_code == 200
+
+    # 重新查询，确认修改已保存
+    response = client.get("/applications")
+    assert response.json()[0]["status"] == "面试中"
+
+
