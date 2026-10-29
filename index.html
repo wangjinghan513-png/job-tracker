@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>求职进度看板</title>
+
+    <style>
+    * { box-sizing: border-box; }
+
+    body {
+        margin: 0;
+        font-family: "Microsoft YaHei", sans-serif;
+        color: #483b36;
+        background:
+            radial-gradient(circle at 8% 5%, #ffecd6 0, transparent 32%),
+            radial-gradient(circle at 95% 20%, #f8e3de 0, transparent 30%),
+            #faf6f0;
+        min-height: 100vh;
+    }
+
+    .container {
+        max-width: 1100px;
+        margin: auto;
+        padding: 36px 24px 60px;
+    }
+
+    .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 16px;
+        padding: 30px 34px;
+        border: 1px solid #f4dfd2;
+        border-radius: 22px;
+        background: linear-gradient(120deg, #fffaf3, #fce8dc);
+        box-shadow: 0 8px 28px rgba(147, 102, 72, 0.07);
+    }
+
+    .header::after {
+        content: "☀";
+        color: #e9a971;
+        font-size: 64px;
+        line-height: 1;
+        padding: 0 20px;
+    }
+
+    h1 {
+        margin: 8px 0;
+        font-size: 30px;
+        color: #62483c;
+    }
+
+    h2 {
+        margin: 0 0 18px;
+        font-size: 19px;
+        color: #62483c;
+    }
+
+    p { color: #9a867a; }
+
+    .tag {
+        color: #cf8c67;
+        font-size: 12px;
+        font-weight: bold;
+        letter-spacing: 2px;
+    }
+
+    .stats {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 14px;
+        margin: 24px 0;
+    }
+
+    .stat, .panel, .card {
+        background: rgba(255, 253, 249, 0.95);
+        border: 1px solid #f0e6dc;
+        box-shadow: 0 6px 20px rgba(133, 100, 78, 0.06);
+    }
+
+    .stat {
+        padding: 20px;
+        border-radius: 16px;
+        border-top: 3px solid #edb394;
+    }
+
+    .stat:nth-child(2) { border-top-color: #e8c27e; }
+    .stat:nth-child(3) { border-top-color: #eda78f; }
+    .stat:nth-child(4) { border-top-color: #a6c8aa; }
+    .stat:nth-child(5) { border-top-color: #cbb8ca; }
+
+    .stat span {
+        color: #a18d80;
+        font-size: 13px;
+    }
+
+    .stat strong {
+        display: block;
+        margin-top: 8px;
+        font-size: 28px;
+        color: #634b3e;
+    }
+
+    .layout {
+        display: grid;
+        grid-template-columns: 300px 1fr;
+        align-items: start;
+        gap: 20px;
+    }
+
+    .panel {
+        padding: 24px;
+        border-radius: 18px;
+    }
+
+    label {
+        display: block;
+        margin-bottom: 16px;
+        color: #806d62;
+        font-size: 14px;
+    }
+
+    input, select, button {
+        font: inherit;
+        border-radius: 9px;
+    }
+
+    input, select {
+        width: 100%;
+        margin-top: 7px;
+        padding: 11px;
+        border: 1px solid #eadbd0;
+        background: #fffdfa;
+        color: #483b36;
+    }
+
+    input:focus, select:focus {
+        outline: 2px solid #f2c5aa;
+        border-color: transparent;
+    }
+
+    button {
+        padding: 10px 15px;
+        border: 0;
+        cursor: pointer;
+    }
+
+    .primary {
+        width: 100%;
+        padding: 12px;
+        background: #d88765;
+        color: white;
+        font-weight: bold;
+    }
+
+    .primary:hover { background: #c97756; }
+
+    .list { display: grid; gap: 12px; }
+
+    .card {
+        padding: 18px;
+        border-radius: 14px;
+        background: #fffaf5;
+        border-left: 4px solid #edc4a9;
+    }
+
+    .company {
+        font-weight: bold;
+        font-size: 17px;
+        color: #634b3e;
+    }
+
+    .position {
+        margin: 7px 0 0;
+        font-size: 14px;
+    }
+
+    .card-actions {
+        display: flex;
+        align-items: end;
+        gap: 10px;
+        margin-top: 14px;
+    }
+
+    .card-actions select { max-width: 150px; }
+
+    .delete {
+        background: #fbece8;
+        color: #bd7066;
+    }
+
+    .delete:hover { background: #f6dcd5; }
+
+    .message {
+        min-height: 20px;
+        font-size: 14px;
+    }
+
+    @media (max-width: 700px) {
+        .container { padding: 20px 16px 40px; }
+        .header { padding: 24px; }
+        .header::after { font-size: 40px; padding: 0; }
+        .stats { grid-template-columns: repeat(2, 1fr); }
+        .layout { grid-template-columns: 1fr; }
+        h1 { font-size: 25px; }
+    }
+    /* 圆润一点的字体 */
+    body {
+        font-family: "Microsoft YaHei UI", "Microsoft YaHei", sans-serif;
+        letter-spacing: 0.5px;
+    }
+
+    h1, h2, .company {
+        font-family: "YouYuan", "Microsoft YaHei", sans-serif;
+        font-weight: bold;
+    }
+
+    /* 让太阳慢慢转动 */
+    .header::after {
+        display: inline-block;
+        animation: sun-spin 12s linear infinite;
+    }
+
+    @keyframes sun-spin {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+    }
+
+    /* 尊重系统的减少动态效果设置 */
+    @media (prefers-reduced-motion: reduce) {
+        .header::after {
+            animation: none;
+        }
+    }
+</style>
+</head>
+
+<body>
+    <main class="container">
+        <div class="header">
+            <div>
+                <div class="tag">JOB TRACKER</div>
+                <h1>求职进度看板</h1>
+                <p>记录每一次机会，掌握自己的求职节奏。</p>
+            </div>
+        </div>
+
+        <section class="stats" id="stats"></section>
+
+        <div class="layout">
+            <section class="panel">
+                <h2>添加投递</h2>
+                <form id="application-form">
+                    <label>
+                        公司名称
+                        <input id="company" placeholder="例如：腾讯" required>
+                    </label>
+
+                    <label>
+                        应聘岗位
+                        <input id="position" placeholder="例如：开发实习生" required>
+                    </label>
+
+                    <label>
+                        当前状态
+                        <select id="status">
+                            <option>已投递</option>
+                            <option>面试中</option>
+                            <option>已录用</option>
+                            <option>未通过</option>
+                        </select>
+                    </label>
+
+                    <button class="primary" type="submit">＋ 添加记录</button>
+                </form>
+            </section>
+
+            <section class="panel">
+                <h2>我的投递</h2>
+<label for="filter-status">按状态查看</label>
+<select id="filter-status">
+    <option value="">全部状态</option>
+    <option value="已投递">已投递</option>
+    <option value="面试中">面试中</option>
+    <option value="已录用">已录用</option>
+    <option value="未通过">未通过</option>
+</select>
+                <div class="list" id="application-list"></div>
+                <p class="message" id="message"></p>
+            </section>
+        </div>
+    </main>
+
+    <script>
+        const statuses = ["已投递", "面试中", "已录用", "未通过"];
+        const form = document.getElementById("application-form");
+        const message = document.getElementById("message");
+
+        function renderStats(applications) {
+            const stats = document.getElementById("stats");
+            stats.replaceChildren();
+
+            const counts = [
+                ["全部投递", applications.length],
+                ...statuses.map(status => [
+                    status,
+                    applications.filter(item => item.status === status).length
+                ])
+            ];
+
+            for (const [label, count] of counts) {
+                const box = document.createElement("div");
+                box.className = "stat";
+
+                const title = document.createElement("span");
+                title.textContent = label;
+
+                const number = document.createElement("strong");
+                number.textContent = count;
+
+                box.append(title, number);
+                stats.appendChild(box);
+            }
+        }
+
+        async function loadApplications() {
+            try {
+                const response = await fetch("/applications");
+                if (!response.ok) throw new Error();
+
+                const applications = await response.json();
+                const list = document.getElementById("application-list");
+                list.replaceChildren();
+                renderStats(applications);
+
+                const selectedStatus = document.getElementById("filter-status").value;
+const visibleApplications = selectedStatus
+    ? applications.filter(item => item.status === selectedStatus)
+    : applications;
+
+for (const application of visibleApplications) {                const card = document.createElement("div");
+                    card.className = "card";
+
+                    const company = document.createElement("div");
+                    company.className = "company";
+                    company.textContent = application.company;
+
+                    const position = document.createElement("p");
+                    position.className = "position";
+                    position.textContent = application.position;
+
+                    const actions = document.createElement("div");
+                    actions.className = "card-actions";
+
+                    const select = document.createElement("select");
+                    select.setAttribute("aria-label", "修改投递状态");
+
+                    for (const status of statuses) {
+                        const option = document.createElement("option");
+                        option.value = status;
+                        option.textContent = status;
+                        select.appendChild(option);
+                    }
+                    select.value = application.status;
+
+                    select.onchange = async function () {
+                        try {
+                            const response = await fetch(
+                                `/applications/${application.id}`,
+                                {
+                                    method: "PUT",
+                                    headers: { "Content-Type": "application/json" },
+                                    body: JSON.stringify({
+                                        company: application.company,
+                                        position: application.position,
+                                        status: select.value
+                                    })
+                                }
+                            );
+                            if (!response.ok) throw new Error();
+                            await loadApplications();
+                        } catch (error) {
+                            select.value = application.status;
+                            message.textContent = "修改失败，请稍后重试。";
+                        }
+                    };
+
+                    const deleteButton = document.createElement("button");
+                    deleteButton.type = "button";
+                    deleteButton.className = "delete";
+                    deleteButton.textContent = "删除";
+
+                    deleteButton.onclick = async function () {
+                        if (!confirm(`确定删除 ${application.company} 的记录吗？`)) return;
+
+                        try {
+                            const response = await fetch(
+                                `/applications/${application.id}`,
+                                { method: "DELETE" }
+                            );
+                            if (!response.ok) throw new Error();
+                            await loadApplications();
+                        } catch (error) {
+                            message.textContent = "删除失败，请稍后重试。";
+                        }
+                    };
+
+                    actions.append(select, deleteButton);
+                    card.append(company, position, actions);
+                    list.appendChild(card);
+                }
+
+                message.textContent = applications.length
+                    ? `共 ${applications.length} 条记录`
+                    : "还没有投递记录，添加第一条吧。";
+            } catch (error) {
+                message.textContent = "读取失败，请检查程序是否正在运行。";
+            }
+        }
+
+        form.addEventListener("submit", async function (event) {
+            event.preventDefault();
+
+            const application = {
+                company: document.getElementById("company").value.trim(),
+                position: document.getElementById("position").value.trim(),
+                status: document.getElementById("status").value
+            };
+
+            if (!application.company || !application.position) {
+                message.textContent = "请填写公司和岗位。";
+                return;
+            }
+
+            try {
+                const response = await fetch("/applications", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(application)
+                });
+
+                if (!response.ok) throw new Error();
+                form.reset();
+                await loadApplications();
+            } catch (error) {
+                message.textContent = "添加失败，请稍后重试。";
+            }
+        });
+document.getElementById("filter-status").addEventListener(
+    "change",
+    loadApplications
+);
+        loadApplications();
+    </script>
+
+   <div class="music-player">         
+    <label for="music-file">♫ 选择喜欢的音乐</label>
+<input id="music-file" type="file" accept="audio/*,video/mp4,.mp4">
+   <audio id="audio-player" src="/music" controls loop></audio>
+</div>
+
+<style>
+    .music-player {
+        position: fixed;
+        right: 20px;
+        bottom: 80px;
+        width: 270px;
+        padding: 16px;
+        border: 1px solid #efd8c8;
+        border-radius: 16px;
+        background: #fffaf3;
+        box-shadow: 0 6px 20px rgba(133, 100, 78, 0.15);
+    }
+
+    .music-player label {
+        margin-bottom: 8px;
+        color: #a5694f;
+        font-weight: bold;
+    }
+
+    .music-player input {
+        margin: 0 0 10px;
+        font-size: 12px;
+    }
+
+    .music-player audio {
+        display: block;
+        width: 100%;
+        height: 38px;
+    }
+</style>
+
+<script>
+    const musicFile = document.getElementById("music-file");
+    const audioPlayer = document.getElementById("audio-player");
+    let musicUrl = null;
+
+    musicFile.addEventListener("change", function () {
+        const file = musicFile.files[0];
+        if (!file) return;
+
+        if (musicUrl) {
+            URL.revokeObjectURL(musicUrl);
+        }
+
+        musicUrl = URL.createObjectURL(file);
+        audioPlayer.src = musicUrl;
+        audioPlayer.load();
+    });
+</script>
+<style>
+    .music-player {
+        right: 12px;
+        bottom: 12px;
+        width: 220px;
+        padding: 10px;
+    }
+
+    .music-player label {
+        font-size: 13px;
+        margin-bottom: 4px;
+    }
+
+    .music-player input {
+        font-size: 11px;
+        padding: 5px;
+        margin-bottom: 6px;
+    }
+
+    .music-player audio {
+        height: 32px;
+    }
+</style>
+<style>
+    .music-player label,
+    .music-player input {
+        display: none;
+    }
+</style>
+</body>
+</html>
