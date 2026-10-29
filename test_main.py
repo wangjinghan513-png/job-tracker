@@ -69,3 +69,56 @@ def test_update_missing_application(client):
     )
 
     assert response.status_code == 404
+
+def test_delete_application(client):
+    # 先创建一条测试记录
+    response = client.post(
+        "/applications",
+        json={
+            "company": "测试公司",
+            "position": "实习生",
+            "status": "已投递",
+        },
+    )
+    application_id = response.json()["id"]
+
+    # 删除刚创建的记录
+    response = client.delete(f"/applications/{application_id}")
+    assert response.status_code == 200
+
+    # 再查询，确认记录已经不存在
+    response = client.get("/applications")
+    assert response.json() == []
+
+    # 再次删除同一条记录，应该返回 404
+    response = client.delete(f"/applications/{application_id}")
+    assert response.status_code == 404
+
+
+def test_filter_applications_by_status(client):
+    client.post(
+        "/applications",
+        json={
+            "company": "甲公司",
+            "position": "开发实习生",
+            "status": "已投递",
+        },
+    )
+    client.post(
+        "/applications",
+        json={
+            "company": "乙公司",
+            "position": "测试实习生",
+            "status": "面试中",
+        },
+    )
+
+    response = client.get(
+        "/applications",
+        params={"status": "面试中"},
+    )
+
+    assert response.status_code == 200
+    assert len(response.json()) == 1
+    assert response.json()[0]["company"] == "乙公司"
+

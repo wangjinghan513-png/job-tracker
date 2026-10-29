@@ -78,3 +78,27 @@ python -m venv .venv
 
 这是参考相关技术自行搭建的学习项目，并非官方模板的完整复刻。
 
+
+
+
+
+
+
+\## 运行测试
+
+
+
+安装项目依赖后，在项目文件夹中执行：
+
+
+
+```powershell
+
+.\\.venv\\Scripts\\python.exe -m pytest test\_main.py -v
+
+```
+
+
+
+测试会使用临时数据库，不会修改自己的投递记录。
+
