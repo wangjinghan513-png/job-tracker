@@ -246,7 +246,32 @@
             </div>
         </div>
 
-        <section class="stats" id="stats"></section>
+     <section class="panel" style="margin-top: 20px;">
+    <h2>账号登录</h2>
+
+    <form id="login-form">
+        <label>
+            用户名
+            <input id="login-username" autocomplete="username" required>
+        </label>
+
+        <label>
+            密码
+            <input
+                id="login-password"
+                type="password"
+                autocomplete="current-password"
+                required
+            >
+        </label>
+
+        <button class="primary" type="submit">登录</button>
+    </form>
+
+    <p id="login-message"></p>
+    <button id="logout-button" type="button">退出登录</button>
+</section>
+    <section class="stats" id="stats"></section>
 
         <div class="layout">
             <section class="panel">
@@ -538,5 +563,70 @@ document.getElementById("filter-status").addEventListener(
         display: none;
     }
 </style>
+<script>
+    const loginForm = document.getElementById("login-form");
+    const loginMessage = document.getElementById("login-message");
+
+    loginForm.addEventListener("submit", async function (event) {
+        event.preventDefault();
+        loginMessage.textContent = "正在登录……";
+
+        try {
+            const response = await fetch("/login", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    username: document.getElementById("login-username").value,
+                    password: document.getElementById("login-password").value
+                })
+            });
+
+            if (!response.ok) {
+                loginMessage.textContent = "登录失败，请检查用户名和密码。";
+                return;
+            }
+
+            document.getElementById("login-password").value = "";
+            loginMessage.textContent =
+                   "已登录：" + document.getElementById("login-username").value;
+            await loadApplications();
+        } catch (error) {
+            loginMessage.textContent = "无法连接程序，请稍后重试。";
+        }
+    });
+
+    document.getElementById("logout-button").addEventListener(
+        "click",
+        async function () {
+            try {
+                const response = await fetch("/logout", { method: "POST" });
+                if (!response.ok) throw new Error();
+
+                // 重新加载页面，清除屏幕上显示的投递记录
+                window.location.reload();
+            } catch (error) {
+                loginMessage.textContent = "退出失败，请稍后重试。";
+            }
+        }
+    );
+</script>
+<script>
+    async function showCurrentUser() {
+        try {
+            const response = await fetch("/me");
+
+            if (response.ok) {
+                const user = await response.json();
+                document.getElementById("login-message").textContent =
+                    "已登录：" + user.username;
+            }
+        } catch (error) {
+            document.getElementById("login-message").textContent =
+                "无法获取登录状态，请检查程序是否运行。";
+        }
+    }
+
+    showCurrentUser();
+</script>
 </body>
 </html>
