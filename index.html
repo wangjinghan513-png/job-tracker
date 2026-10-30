@@ -354,8 +354,16 @@
 
         async function loadApplications() {
             try {
-                const response = await fetch("/applications");
-                if (!response.ok) throw new Error();
+              const response = await fetch("/applications");
+
+if (response.status === 401) {
+    document.getElementById("application-list").replaceChildren();
+    document.getElementById("stats").replaceChildren();
+    message.textContent = "请先登录，查看你的投递记录。";
+    return;
+}
+
+if (!response.ok) throw new Error();
 
                 const applications = await response.json();
                 const list = document.getElementById("application-list");
@@ -439,9 +447,11 @@ for (const application of visibleApplications) {                const card = doc
                     list.appendChild(card);
                 }
 
-                message.textContent = applications.length
-                    ? `共 ${applications.length} 条记录`
-                    : "还没有投递记录，添加第一条吧。";
+               message.textContent = visibleApplications.length
+    ? `当前显示 ${visibleApplications.length} 条记录`
+    : selectedStatus
+        ? "这个状态下还没有记录。"
+        : "还没有投递记录，添加第一条吧。";
             } catch (error) {
                 message.textContent = "读取失败，请检查程序是否正在运行。";
             }
