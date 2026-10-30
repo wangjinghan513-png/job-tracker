@@ -266,6 +266,9 @@
         </label>
 
         <button class="primary" type="submit">登录</button>
+<button id="register-button" type="button" style="margin-top: 10px;">
+    注册账号
+</button>
     </form>
 
     <p id="login-message"></p>
@@ -627,6 +630,51 @@ document.getElementById("filter-status").addEventListener(
     }
 
     showCurrentUser();
+</script>
+<script>
+    document.getElementById("register-button").addEventListener(
+        "click",
+        async function () {
+            const username = document.getElementById("login-username").value.trim();
+            const password = document.getElementById("login-password").value;
+            const message = document.getElementById("login-message");
+
+            if (!/^[a-zA-Z0-9_]{3,30}$/.test(username)) {
+                message.textContent = "用户名需为 3～30 位英文字母、数字或下划线。";
+                return;
+            }
+
+            if (password.length < 8 || password.length > 128) {
+                message.textContent = "密码长度需要为 8～128 个字符。";
+                return;
+            }
+
+            message.textContent = "正在注册……";
+
+            try {
+                const response = await fetch("/register", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ username, password })
+                });
+
+                if (response.status === 409) {
+                    message.textContent = "用户名已存在，请换一个。";
+                    return;
+                }
+
+                if (!response.ok) {
+                    message.textContent = "注册失败，请检查输入后重试。";
+                    return;
+                }
+
+                document.getElementById("login-password").value = "";
+                message.textContent = "注册成功！请重新输入密码并点击登录。";
+            } catch (error) {
+                message.textContent = "无法连接程序，请稍后重试。";
+            }
+        }
+    );
 </script>
 </body>
 </html>
