@@ -272,7 +272,7 @@
     </form>
 
     <p id="login-message"></p>
-    <button id="logout-button" type="button">退出登录</button>
+    <button id="logout-button" type="button" hidden>退出登录</button>
 </section>
     <section class="stats" id="stats"></section>
 
@@ -306,6 +306,8 @@
 
             <section class="panel">
                 <h2>我的投递</h2>
+<label for="search-company">搜索公司</label>
+<input id="search-company" placeholder="输入公司名称">
 <label for="filter-status">按状态查看</label>
 <select id="filter-status">
     <option value="">全部状态</option>
@@ -371,9 +373,14 @@ if (!response.ok) throw new Error();
                 renderStats(applications);
 
                 const selectedStatus = document.getElementById("filter-status").value;
-const visibleApplications = selectedStatus
-    ? applications.filter(item => item.status === selectedStatus)
-    : applications;
+const searchText = document.getElementById("search-company").value.trim().toLowerCase();
+
+const visibleApplications = applications.filter(item => {
+    const matchesStatus = !selectedStatus || item.status === selectedStatus;
+    const matchesCompany = item.company.toLowerCase().includes(searchText);
+
+    return matchesStatus && matchesCompany;
+});
 
 for (const application of visibleApplications) {                const card = document.createElement("div");
                     card.className = "card";
@@ -601,6 +608,8 @@ document.getElementById("filter-status").addEventListener(
 
             document.getElementById("login-password").value = "";
             loginMessage.textContent =
+loginForm.hidden = true;
+document.getElementById("logout-button").hidden = false;
                    "已登录：" + document.getElementById("login-username").value;
             await loadApplications();
         } catch (error) {
@@ -630,6 +639,8 @@ document.getElementById("filter-status").addEventListener(
 
             if (response.ok) {
                 const user = await response.json();
+document.getElementById("login-form").hidden = true;
+document.getElementById("logout-button").hidden = false;
                 document.getElementById("login-message").textContent =
                     "已登录：" + user.username;
             }
@@ -640,6 +651,10 @@ document.getElementById("filter-status").addEventListener(
     }
 
     showCurrentUser();
+document.getElementById("search-company").addEventListener(
+    "input",
+    loadApplications
+);
 </script>
 <script>
     document.getElementById("register-button").addEventListener(
