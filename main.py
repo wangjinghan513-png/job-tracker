@@ -71,7 +71,7 @@ def list_applications(
         if status:
             rows = connection.execute(
                 """
-                SELECT id, company, position, status, applied_date
+                SELECT id, company, position, status, applied_date, notes
                 FROM applications
                 WHERE user_id = ? AND status = ?
                 """,
@@ -80,7 +80,7 @@ def list_applications(
         else:
             rows = connection.execute(
                 """
-                SELECT id, company, position, status, applied_date
+                SELECT id, company, position, status, applied_date, notes
                 FROM applications
                 WHERE user_id = ?
                 """,
@@ -388,3 +388,46 @@ def update_application_date(
             raise HTTPException(status_code=404, detail="记录不存在")
 
     return {"id": application_id, "applied_date": update.applied_date}
+
+
+def add_application_notes_column():
+    with sqlite3.connect(database_path) as connection:
+        columns = connection.execute(
+            "PRAGMA table_info(applications)"
+        ).fetchall()
+
+        if not any(column[1] == "notes" for column in columns):
+            connection.execute(
+                "ALTER TABLE applications ADD COLUMN notes TEXT"
+            )
+
+
+add_application_notes_column()
+
+
+class ApplicationNotesUpdate(BaseModel):
+    notes: str = Field(max_length=2000)
+
+
+@app.patch("/applications/{application_id}/notes")
+def update_application_notes(
+    application_id: int,
+    update: ApplicationNotesUpdate,
+    session: str | None = Cookie(default=None),
+):
+    user = current_user(session)
+
+    with sqlite3.connect(database_path) as connection:
+        cursor = connection.execute(
+            """
+            UPDATE applications
+            SET notes = ?
+            WHERE id = ? AND user_id = ?
+            """,
+            (update.notes, application_id, user["id"]),
+        )
+
+        if cursor.rowcount == 0:
+            raise HTTPException(status_code=404, detail="记录不存在")
+
+    return {"id": application_id, "notes": update.notes}

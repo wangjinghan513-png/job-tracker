@@ -426,6 +426,44 @@ dateInput.onchange = async function () {
         message.textContent = "修改日期失败，请稍后重试。";
     }
 };
+                    const notesInput = document.createElement("textarea");
+notesInput.className = "notes-input";
+notesInput.value = application.notes || "";
+notesInput.placeholder = "记录面试反馈、跟进计划等";
+notesInput.maxLength = 2000;
+notesInput.rows = 3;
+notesInput.setAttribute("aria-label", "投递备注");
+notesInput.style.width = "100%";
+notesInput.style.marginTop = "12px";
+
+const saveNotesButton = document.createElement("button");
+saveNotesButton.className = "notes-save";
+saveNotesButton.type = "button";
+saveNotesButton.textContent = "保存备注";
+
+saveNotesButton.onclick = async function () {
+    saveNotesButton.disabled = true;
+
+    try {
+        const response = await fetch(
+            `/applications/${application.id}/notes`,
+            {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ notes: notesInput.value })
+            }
+        );
+
+        if (!response.ok) throw new Error();
+
+        await loadApplications();
+        message.textContent = "备注已保存。";
+    } catch (error) {
+        message.textContent = "保存备注失败，请稍后重试。";
+    } finally {
+        saveNotesButton.disabled = false;
+    }
+};
                     const actions = document.createElement("div");
                     actions.className = "card-actions";
 
@@ -483,7 +521,31 @@ dateInput.onchange = async function () {
                     };
 
                     actions.append(select, deleteButton);
-                   card.append(company, position, appliedDate, dateInput, actions); 
+               const details = document.createElement("details");
+details.className = "record-details";
+
+const summary = document.createElement("summary");
+summary.className = "record-summary";
+
+const statusBadge = document.createElement("span");
+statusBadge.className = "status-badge";
+statusBadge.textContent = application.status;
+
+summary.append(company, statusBadge);
+
+const detailContent = document.createElement("div");
+detailContent.className = "record-content";
+detailContent.append(
+    position,
+    appliedDate,
+    dateInput,
+    notesInput,
+    saveNotesButton,
+    actions
+);
+
+details.append(summary, detailContent);
+card.appendChild(details);
                     list.appendChild(card);
                 }
 
@@ -735,5 +797,99 @@ document.getElementById("search-company").addEventListener(
         }
     );
 </script>
+<style>
+    .notes-input {
+        display: block;
+        min-height: 82px;
+        padding: 12px 14px;
+        border: 1px solid #eadbd0;
+        border-radius: 12px;
+        background: #fffdf9;
+        color: #624b40;
+        font: inherit;
+        font-size: 14px;
+        line-height: 1.6;
+        resize: vertical;
+    }
+
+    .notes-input::placeholder {
+        color: #c2afa2;
+    }
+
+    .notes-input:focus {
+        outline: none;
+        border-color: #dfa887;
+        box-shadow: 0 0 0 3px rgba(223, 168, 135, 0.18);
+    }
+
+    .notes-save {
+        margin-top: 8px;
+        padding: 8px 15px;
+        border: 1px solid #f0d7c9;
+        border-radius: 9px;
+        background: #fbece3;
+        color: #a9654b;
+        font-size: 13px;
+        font-weight: bold;
+    }
+
+    .notes-save:hover {
+        background: #f6ded0;
+    }
+
+    .notes-save:disabled {
+        opacity: 0.6;
+        cursor: wait;
+    }
+</style>
+<style>
+    .record-summary {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        cursor: pointer;
+        list-style: none;
+    }
+
+    .record-summary::-webkit-details-marker {
+        display: none;
+    }
+
+    .record-summary .company {
+        flex: 1;
+    }
+
+    .record-summary::after {
+        content: "⌄";
+        color: #c79276;
+        font-size: 20px;
+        transition: transform 0.2s ease;
+    }
+
+    .record-details[open] .record-summary::after {
+        transform: rotate(180deg);
+    }
+
+    .record-content {
+        margin-top: 16px;
+        padding-top: 12px;
+        border-top: 1px solid #f1e3d8;
+    }
+
+    .status-badge {
+        padding: 5px 10px;
+        border-radius: 20px;
+        background: #f9e9dd;
+        color: #a66d51;
+        font-size: 12px;
+        white-space: nowrap;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .record-summary::after {
+            transition: none;
+        }
+    }
+</style>
 </body>
 </html>

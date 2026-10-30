@@ -11,6 +11,7 @@ def client(tmp_path, monkeypatch):
     main.create_table()
     main.add_application_owner_column()
     main.add_application_date_column()
+    main.add_application_notes_column()
     main.create_user_table()
     main.create_session_table()
     with TestClient(main.app) as test_client:
@@ -347,4 +348,27 @@ def test_update_application_date(logged_in_client):
 
     response = client.get("/applications")
     assert response.json()[0]["applied_date"] == "2026-10-30"
+
+def test_update_application_notes(logged_in_client):
+    client = logged_in_client
+
+    response = client.post(
+        "/applications",
+        json={
+            "company": "备注测试公司",
+            "position": "实习生",
+            "status": "已投递",
+        },
+    )
+    assert response.status_code == 200
+    record_id = response.json()["id"]
+
+    response = client.patch(
+        f"/applications/{record_id}/notes",
+        json={"notes": "下周跟进面试结果"},
+    )
+    assert response.status_code == 200
+
+    response = client.get("/applications")
+    assert response.json()[0]["notes"] == "下周跟进面试结果"
 

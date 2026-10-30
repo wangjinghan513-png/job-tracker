@@ -11,6 +11,7 @@ def clients(tmp_path, monkeypatch):
     main.create_table()
     main.add_application_owner_column()
     main.add_application_date_column()
+    main.add_application_notes_column()
     main.create_user_table()
     main.create_session_table()
 
@@ -112,3 +113,35 @@ def test_user_cannot_change_another_users_date(clients):
     # 第一位用户的原日期没有改变
     response = first.get("/applications")
     assert response.json()[0]["applied_date"] == "2026-10-30"
+
+
+def test_user_cannot_change_another_users_notes(clients):
+    first, second = clients
+
+    for client, username in [(first, "notes_user_one"), (second, "notes_user_two")]:
+        credentials = {
+            "username": username,
+            "password": "test-password-123",
+        }
+        assert client.post("/register", json=credentials).status_code == 201
+        assert client.post("/login", json=credentials).status_code == 200
+
+    response = first.post(
+        "/applications",
+        json={
+            "company": "备注测试公司",
+            "position": "实习生",
+            "status": "已投递",
+        },
+    )
+    assert response.status_code == 200
+    record_id = response.json()["id"]
+
+    response = second.patch(
+        f"/applications/{record_id}/notes",
+        json={"notes": "不应该保存"},
+    )
+    assert response.status_code == 404
+
+    response = first.get("/applications")
+    assert response.json()[0]["notes"] is None
