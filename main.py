@@ -1,3 +1,4 @@
+from datetime import date
 import hashlib
 import secrets
 from fastapi import Cookie, Response
@@ -35,6 +36,7 @@ class Application(BaseModel):
     company: str
     position: str
     status: Literal["已投递", "面试中", "已录用", "未通过"]
+    applied_date: date | None = None
 
     @field_validator("company", "position")
     @classmethod
@@ -69,7 +71,7 @@ def list_applications(
         if status:
             rows = connection.execute(
                 """
-                SELECT id, company, position, status
+                SELECT id, company, position, status, applied_date
                 FROM applications
                 WHERE user_id = ? AND status = ?
                 """,
@@ -78,7 +80,7 @@ def list_applications(
         else:
             rows = connection.execute(
                 """
-                SELECT id, company, position, status
+                SELECT id, company, position, status, applied_date
                 FROM applications
                 WHERE user_id = ?
                 """,
@@ -98,10 +100,15 @@ def create_application(
     with sqlite3.connect(database_path) as connection:
         cursor = connection.execute(
             """
-            INSERT INTO applications (company, position, status, user_id)
-            VALUES (?, ?, ?, ?)
-            """,
-            (application.company, application.position, application.status, user["id"]),
+           INSERT INTO applications (company, position, status, user_id, applied_date)
+VALUES (?, ?, ?, ?, ?)
+""",            (
+    application.company,
+    application.position,
+    application.status,
+    user["id"],
+    application.applied_date.isoformat() if application.applied_date else None,
+), 
         )
         new_id = cursor.lastrowid
 
@@ -337,3 +344,47 @@ def add_application_owner_column():
 add_application_owner_column()
 
 
+def add_application_date_column():
+    with sqlite3.connect(database_path) as connection:
+        columns = connection.execute(
+            "PRAGMA table_info(applications)"
+        ).fetchall()
+
+        if not any(column[1] == "applied_date" for column in columns):
+            connection.execute(
+                "ALTER TABLE applications ADD COLUMN applied_date TEXT"
+            )
+
+
+add_application_date_column()
+
+class ApplicationDateUpdate(BaseModel):
+    applied_date: date | None
+
+
+@app.patch("/applications/{application_id}/date")
+def update_application_date(
+    application_id: int,
+    update: ApplicationDateUpdate,
+    session: str | None = Cookie(default=None),
+):
+    user = current_user(session)
+
+    with sqlite3.connect(database_path) as connection:
+        cursor = connection.execute(
+            """
+            UPDATE applications
+            SET applied_date = ?
+            WHERE id = ? AND user_id = ?
+            """,
+            (
+                update.applied_date.isoformat() if update.applied_date else None,
+                application_id,
+                user["id"],
+            ),
+        )
+
+        if cursor.rowcount == 0:
+            raise HTTPException(status_code=404, detail="记录不存在")
+
+    return {"id": application_id, "applied_date": update.applied_date}

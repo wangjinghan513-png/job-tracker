@@ -10,6 +10,7 @@ def clients(tmp_path, monkeypatch):
     monkeypatch.setattr(main, "database_path", tmp_path / "test.db")
     main.create_table()
     main.add_application_owner_column()
+    main.add_application_date_column()
     main.create_user_table()
     main.create_session_table()
 
@@ -76,3 +77,38 @@ def test_logged_out_user_cannot_change_records(clients):
     assert first.put("/applications/1", json=record).status_code == 401
     assert first.delete("/applications/1").status_code == 401
 
+
+def test_user_cannot_change_another_users_date(clients):
+    first, second = clients
+
+    for client, username in [(first, "date_user_one"), (second, "date_user_two")]:
+        credentials = {
+            "username": username,
+            "password": "test-password-123",
+        }
+        assert client.post("/register", json=credentials).status_code == 201
+        assert client.post("/login", json=credentials).status_code == 200
+
+    # 第一个用户创建记录
+    response = first.post(
+        "/applications",
+        json={
+            "company": "日期测试公司",
+            "position": "实习生",
+            "status": "已投递",
+            "applied_date": "2026-10-30",
+        },
+    )
+    assert response.status_code == 200
+    record_id = response.json()["id"]
+
+    # 第二个用户不能修改第一位用户的日期
+    response = second.patch(
+        f"/applications/{record_id}/date",
+        json={"applied_date": "2026-11-01"},
+    )
+    assert response.status_code == 404
+
+    # 第一位用户的原日期没有改变
+    response = first.get("/applications")
+    assert response.json()[0]["applied_date"] == "2026-10-30"

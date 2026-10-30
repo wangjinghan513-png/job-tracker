@@ -290,7 +290,10 @@
                         <input id="position" placeholder="例如：开发实习生" required>
                     </label>
 
-                    <label>
+                   <label>
+    投递日期
+    <input id="applied-date" type="date">
+</label> <label>
                         当前状态
                         <select id="status">
                             <option>已投递</option>
@@ -392,7 +395,37 @@ for (const application of visibleApplications) {                const card = doc
                     const position = document.createElement("p");
                     position.className = "position";
                     position.textContent = application.position;
+const appliedDate = document.createElement("p");
+appliedDate.className = "position";
+appliedDate.textContent = application.applied_date
+    ? `投递日期：${application.applied_date}`
+    : "投递日期：未填写";
+const dateInput = document.createElement("input");
+dateInput.type = "date";
+dateInput.value = application.applied_date || "";
+dateInput.setAttribute("aria-label", "修改投递日期");
 
+dateInput.onchange = async function () {
+    try {
+        const response = await fetch(
+            `/applications/${application.id}/date`,
+            {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    applied_date: dateInput.value || null
+                })
+            }
+        );
+
+        if (!response.ok) throw new Error();
+
+        await loadApplications();
+    } catch (error) {
+        dateInput.value = application.applied_date || "";
+        message.textContent = "修改日期失败，请稍后重试。";
+    }
+};
                     const actions = document.createElement("div");
                     actions.className = "card-actions";
 
@@ -450,7 +483,7 @@ for (const application of visibleApplications) {                const card = doc
                     };
 
                     actions.append(select, deleteButton);
-                    card.append(company, position, actions);
+                   card.append(company, position, appliedDate, dateInput, actions); 
                     list.appendChild(card);
                 }
 
@@ -470,7 +503,8 @@ for (const application of visibleApplications) {                const card = doc
             const application = {
                 company: document.getElementById("company").value.trim(),
                 position: document.getElementById("position").value.trim(),
-                status: document.getElementById("status").value
+                status: document.getElementById("status").value,
+applied_date: document.getElementById("applied-date").value || null
             };
 
             if (!application.company || !application.position) {
